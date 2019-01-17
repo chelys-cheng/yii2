@@ -83,6 +83,12 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * Returns a value indicating whether the record has an attribute with the specified name.
      * @param string $name the name of the attribute
      * @return bool whether the record has an attribute with the specified name.
+     * 
+     * 返回一个值标识此活动记录是否有指定名称的属性。
+     * 参数：
+     *   $name | string | 属性名
+     * 结果：
+     *   bool | 此活动记录是否包含指定名称的属性。
      */
     public function hasAttribute($name);
 
@@ -94,6 +100,14 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @return mixed the primary key value. An array (attribute name => attribute value) is returned if the primary key
      * is composite or `$asArray` is true. A string is returned otherwise (`null` will be returned if
      * the key value is `null`).
+     *
+     * 返回主键的值。
+     * 参数：
+     *   $asArray | bool | 主键值是否以一个数组返回。如果值为`true`，将会返回一个以属性名为键，以属性值为值的数组。
+     *                     需要注意的是，对于复合主键，将会忽略这个参数，直接返回一个数组。
+     * 结果：
+     *   mixed | 主键的值。如果`$asArray`为`true`，将会返回一个数组，格式为`[属性名 => 属性值]`，
+     *                    如果`$asArray`为`false`，将会返回一个字符串，如果主键值为`null`则返回`null`。
      */
     public function getPrimaryKey($asArray = false);
 
@@ -105,12 +119,19 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param bool $asArray whether to return the primary key value as an array. If true,
      * the return value will be an array with column name as key and column value as value.
      * If this is `false` (default), a scalar value will be returned for non-composite primary key.
-     * @property mixed The old primary key value. An array (column name => column value) is
-     * returned if the primary key is composite. A string is returned otherwise (`null` will be
-     * returned if the key value is `null`).
      * @return mixed the old primary key value. An array (column name => column value) is returned if the primary key
      * is composite or `$asArray` is true. A string is returned otherwise (`null` will be returned if
      * the key value is `null`).
+     *
+     * 返回一个旧的主键值。
+     * 这是指在执行find方法（例如find()，findOne()）后填充到记录中的主键值。
+     * 即使是主键值被手动修改为不同的值，该值也不会发生变化。
+     * 参数：
+     *   $asArray | bool | 主键值是否以一个数组返回。如果值为`true`，将会返回一个以属性名为键，以属性值为值的数组。
+     *                     如果这是`false`（默认值），则将返回非复合主键的标量值。
+     * 结果：
+     *   mixed | 旧的主键值。如果`$asArray`为`true`，将会返回一个数组，格式为`[属性名 => 属性值]`，
+     *                      如果`$asArray`为`false`，将会返回一个字符串，如果主键值为`null`则返回`null`。
      */
     public function getOldPrimaryKey($asArray = false);
 
@@ -118,6 +139,12 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * Returns a value indicating whether the given set of attributes represents the primary key for this model.
      * @param array $keys the set of attributes to check
      * @return bool whether the given set of attributes represents the primary key for this model
+     *
+     * 返回一个值，表示给定的一组属性是否为整个模型的主键。
+     * 参数：
+     *   $keys | array | 一组需要判断的属性数组
+     * 结果：
+     *   bool | 给定的属性是否为整个模型的主键。
      */
     public static function isPrimaryKey($keys);
 
@@ -288,6 +315,63 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      *
      * @param mixed $condition primary key value or a set of column values
      * @return static ActiveRecord instance matching the condition, or `null` if nothing matches.
+     *
+     * 通过主键值或者一组列值来查询，返回一个单一的活动记录实例。
+     * 此方法允许以下参数类型：
+     *  - 标量（integer或string)：通过单一主键值来查询并返回符合条件的活动记录，未找到则返回`null`。
+     *  - 非关联数组：通过复合主键的值数组来查询并返回复合条件的第一个活动记录，未找到则返回`null`。
+     *  - 键值对关联数组：通过一组属性值查询，返回匹配所有值的单一活动记录，未找到则返回`null`。特别注意的是`['id' => 1, 2]` 被视为一个非关联数组。
+     *    列名仅限于当前活动记录对应的数据表的所有列名，以及一些过滤词。
+     * 
+     * 此方法会自动调用`one()`方法，返回一个[[ActiveRecordInterface|ActiveRecord]]实例。
+     * 
+     * > 注意：因为此方法只是一个速记的方法，太过于复杂的筛选条件并不适合作为此方法的参数。
+     * > 如果你需要指定更复杂的筛选条件，使用[[find()]]并搭配[[ActiveQuery::where()|where()]]来代替。
+     *
+     * 使用方法参照以下实例代码：
+     * 
+     * See the following code for usage examples:
+     *
+     * ```php
+     * // 查找一个主键值是10的客户
+     * $customer = Customer::findOne(10);
+     *
+     * // 以上代码等价于：
+     * $customer = Customer::find()->where(['id' => 10])->one();
+     *
+     * // 查找一个主键值是10,11或12的客户
+     * $customers = Customer::findOne([10, 11, 12]);
+     *
+     * // 以上代码等价于：
+     * $customers = Customer::find()->where(['id' => [10, 11, 12]])->one();
+     *
+     * // 查找`age`为30，`status`为1的第一个客户
+     * $customer = Customer::findOne(['age' => 30, 'status' => 1]);
+     *
+     * // 以上代码等价于：
+     * $customer = Customer::find()->where(['age' => 30, 'status' => 1])->one();
+     * ```
+     *
+     * 如果需要将用户输入传递给此方法，请确保输入值是标量，或输入量是数组的情况下，确保无法从外部更改数组结构：
+     *
+     * ```php
+     * // yii\web\Controller类确保$id是标量
+     * public function actionView($id)
+     * {
+     *     $model = Post::findOne($id);
+     *     // ...
+     * } 
+     * // 通过一个标量或数组明确指定要搜索的列，将始终会查找到单个记录
+     * $model = Post::findOne(['id' => Yii::$app->request->get('id')]);
+     *
+     * // 千万不要使用下面的代码！数组可以注入条件来过滤通过任意列的值！即会被SQL注入攻击！
+     * $model = Post::findOne(Yii::$app->request->get('id'));
+     * ```
+     *
+     * 参数：
+     *   $condition | mixed | 主键值或者一组特定的列属性
+     * 结果：
+     *   static | 匹配的ActiveRecord对象，无匹配则结果返回`null`。
      */
     public static function findOne($condition);
 
