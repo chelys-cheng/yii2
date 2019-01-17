@@ -25,13 +25,21 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      *
      * For the primary key **value** see [[getPrimaryKey()]] instead.
      *
-     * @return string[] the primary key name(s) for this AR class.
+     * @return string[] the primary key name(s) for this AR class.   
+     *
+     * 返回此ActiveRecord类的主键名称。
+     * 需要注意的是，即使此活动记录只有单个主键，也应当返回一个数组。
+     * 此方法针对的是主键名称，如果想要获取主键的值，请查看[[getPrimaryKey()]]方法。
+     * 结果：字符串数组 字符串数组，表示此ActiveRecord类的主键名称。
      */
     public static function primaryKey();
 
     /**
      * Returns the list of all attribute names of the record.
      * @return array list of attribute names.
+     *
+     * 返回此活动记录的所有属性名称。
+     * 结果：数组 属性名列表。
      */
     public function attributes();
 
@@ -42,6 +50,15 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param string $name the attribute name
      * @return mixed the attribute value. `null` if the attribute is not set or does not exist.
      * @see hasAttribute()
+     *
+     * 返回指定属性的值。
+     * 如果此活动记录为查询的结果，且未加载参数指定的属性，则会返回`null`。
+     * 参数：
+     *   $name | 字符串 | 需要获取值的属性名
+     * 结果：
+     *   任意属性 | 指定属性名的值。 如果此属性未赋值或不存在，则返回`null`。
+     * 相关：
+     *   @see hasAttribute()
      */
     public function getAttribute($name);
 
@@ -50,6 +67,13 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param string $name the attribute name.
      * @param mixed $value the attribute value.
      * @see hasAttribute()
+     *
+     * 给指定的属性赋值。
+     * 参数：
+     *   $name  | 字符串 | 属性名
+     *   $value | 字符串 | 属性值
+     * 相关：
+     *   @see hasAttribute()
      */
     public function setAttribute($name, $value);
 
@@ -149,6 +173,55 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * $customers = Customer::find()->where('age>30')->all();
      *
      * @return ActiveQueryInterface the newly created [[ActiveQueryInterface]] instance.
+     *
+     * 创建一个拥有[[ActiveQueryInterface]]接口协议的实例，用于查询。
+     * 其结果返回的实例可以通过调用[[ActiveQueryInterface]]接口协议中已定义的方法来增加查询条件，最后调用`one()`或者`all()`
+     * 方法，将返回一个ActiveRecord类的实例。例如：
+     * ```php
+     * // 查询id为1的顾客
+     * $customer = Customer::find()->where(['id' => 1])->one();
+     *
+     * // 查询所有活跃的顾客，并通过年龄来排序
+     * $customers = Customer::find()
+     *     ->where(['status' => 1])
+     *     ->orderBy('age')
+     *     ->all();
+     * ```
+     * 
+     * [[BaseActiveRecord::hasOne()]]和[[BaseActiveRecord::hasMany()]]通过调用此方法来创建一个关联查询。
+     *
+     * 你可以重写这个方法返回一个自定义的查询。例如：
+     * 
+     * ```php
+     * class Customer extends ActiveRecord
+     * {
+     *     public static function find()
+     *     {
+     *         // 使用CustomerQuery类代替默认的ActiveQuery类
+     *         return new CustomerQuery(get_called_class());
+     *     }
+     * }
+     * ```
+     * 下面的代码展示了如何给查询设定一个默认条件：
+     * ```php
+     * class Customer extends ActiveRecord
+     * {
+     *     public static function find()
+     *     {
+     *         return parent::find()->where(['deleted' => false]);
+     *     }
+     * }
+     *
+     * // 使用andWhere()/orWhere()，将会添加查询条件
+     * // SELECT FROM customer WHERE `deleted`=:deleted AND age>30
+     * $customers = Customer::find()->andWhere('age>30')->all();
+     *
+     * // 使用where()，将会覆盖掉默认的查询条件
+     * // SELECT FROM customer WHERE age>30
+     * $customers = Customer::find()->where('age>30')->all();
+     * ```
+     * 结果：
+     *   ActiveQueryInterface实例 | 新创建的拥有[[ActiveQueryInterface]]接口协议的实例。
      */
     public static function find();
 
