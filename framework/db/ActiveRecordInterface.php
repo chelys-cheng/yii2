@@ -30,7 +30,8 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * 返回此ActiveRecord类的主键名称。
      * 需要注意的是，即使此活动记录只有单个主键，也应当返回一个数组。
      * 此方法针对的是主键名称，如果想要获取主键的值，请查看[[getPrimaryKey()]]方法。
-     * 结果：字符串数组 字符串数组，表示此ActiveRecord类的主键名称。
+     * 结果：
+     *   string[] | 表示此ActiveRecord类的主键名称。
      */
     public static function primaryKey();
 
@@ -39,7 +40,8 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @return array list of attribute names.
      *
      * 返回此活动记录的所有属性名称。
-     * 结果：数组 属性名列表。
+     * 结果：
+     *   array | 属性名列表。
      */
     public function attributes();
 
@@ -54,9 +56,9 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * 返回指定属性的值。
      * 如果此活动记录为查询的结果，且未加载参数指定的属性，则会返回`null`。
      * 参数：
-     *   $name | 字符串 | 需要获取值的属性名
+     *   $name | string | 需要获取值的属性名
      * 结果：
-     *   任意属性 | 指定属性名的值。 如果此属性未赋值或不存在，则返回`null`。
+     *   mixed | 指定属性名的值。 如果此属性未赋值或不存在，则返回`null`。
      * 相关：
      *   @see hasAttribute()
      */
@@ -70,8 +72,8 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      *
      * 给指定的属性赋值。
      * 参数：
-     *   $name  | 字符串 | 属性名
-     *   $value | 字符串 | 属性值
+     *   $name  | string | 属性名
+     *   $value | mixed  | 属性值
      * 相关：
      *   @see hasAttribute()
      */
@@ -371,6 +373,20 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * Please refer to [[QueryInterface::where()]] on how to specify this parameter.
      * An empty condition will match all records.
      * @return int the number of rows updated
+     
+     * 使用提供的数据来更新特定的活动记录。
+     *
+     * 例如，将`status`为2的所有顾客的`status`修改为1：
+     * ```php
+     * Customer::updateAll(['status' => 1], ['status' => '2']);
+     * ```
+     * 参数：
+     *   $attributes | array | 保存到活动记录中的属性值（键值对），此属性不像[[update()]]方法一样需要验证。
+     *   $condition  | array | 匹配条件。用于匹配特定的活动记录，进行更新。
+     *                         格式请参考[[QueryInterface::where()]]。
+     *                         如果筛选条件为空，则会匹配所有活动记录。
+     * 结果：
+     *   int | 更新的行条数
      */
     public static function updateAll($attributes, $condition = null);
 
@@ -388,6 +404,21 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * Please refer to [[QueryInterface::where()]] on how to specify this parameter.
      * An empty condition will match all records.
      * @return int the number of rows deleted
+     *
+     * 删除指定的活动记录
+     * 警告：如果你没有指定匹配条件，此方法将删除数据表中的所有数据。
+     *
+     * 例如，以下代码将会删除status为3的所有客户信息：
+     * ```php
+     * Customer::deleteAll([status = 3]);
+     * ```
+     *
+     * 参数：
+     *   $condition | array | 匹配条件。用于匹配特定的活动记录，进行删除。
+     *                        格式请参考[[QueryInterface::where()]]。
+     *                        如果筛选条件为空，则会匹配所有活动记录。
+     * 结果：
+     *   int | 删除的行条数
      */
     public static function deleteAll($condition = null);
 
@@ -412,6 +443,28 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param array $attributeNames list of attribute names that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
      * @return bool whether the saving succeeded (i.e. no validation errors occurred).
+     *
+     * 保存当前的活动记录
+     * 此方法适用于新增活动记录或者修改活动记录。
+     * 当[[getIsNewRecord()|isNewRecord]]为true时，会调用[[insert()]]方法；
+     * 当[[getIsNewRecord()|isNewRecord]]为false时，会调用[[update()]]方法。
+     *
+     * 例如，save一个顾客信息活动记录：
+     * 
+     * ```php
+     * $customer = new Customer; // 新增一条记录 
+     * // $customer = Customer::findOne($id); // 查找一条旧记录
+     * $customer->name = $name;
+     * $customer->email = $email;
+     * $customer->save(); // 均可调用save()来保存
+     * ```
+     *
+     * 参数：
+     *   $runValidation  | bool  | 是否在保存之前进行属性有效性验证（调用[[\yii\base\Model::validate()|validate()]]方法）。
+     *                             默认为`true`。如果属性有效性验证失败，则活动记录不会保存到数据库中，此方法也将返回`false`。
+     *   $attributeNames | array | 需要保存的属性名。默认为`null`，意味着从数据库中读取的所有属性都将保存。
+     * 结果：
+     *   bool | 是否保存成功（即没有有效性验证错误）。
      */
     public function save($runValidation = true, $attributeNames = null);
 
@@ -433,6 +486,22 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param array $attributes list of attributes that need to be saved. Defaults to `null`,
      * meaning all attributes that are loaded from DB will be saved.
      * @return bool whether the attributes are valid and the record is inserted successfully.
+     * 
+     * 将此活动记录的数据插入到数据库中。
+     * 使用方法：
+     * 
+     * ```php
+     * $customer = new Customer;
+     * $customer->name = $name;
+     * $customer->email = $email;
+     * $customer->insert();
+     * ```
+     * 参数：
+     *   $runValidation  | bool  | 是否在保存之前进行属性有效性验证（调用[[\yii\base\Model::validate()|validate()]]方法）。
+     *                             默认为`true`。如果属性有效性验证失败，则活动记录不会保存到数据库中，此方法也将返回`false`。
+     *   $attribute      | array | 需要保存的属性。默认为`null`，意味着从数据库中读取的所有属性都将保存。 
+     * 结果：
+     *   bool | 属性是否有效和成功记录插入。
      */
     public function insert($runValidation = true, $attributes = null);
 
@@ -457,6 +526,25 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * or updating process is stopped for other reasons.
      * Note that it is possible that the number of rows affected is 0, even though the
      * update execution is successful.
+     * 
+     * 将此活动记录的修改保存到数据库中。
+     *
+     * 使用方法：
+     * ```php
+     * $customer = Customer::findOne($id);
+     * $customer->name = $name;
+     * $customer->email = $email;
+     * $customer->update();
+     * ```
+     * 
+     * 参数：
+     *   $runValidation  | bool  | 是否在保存之前进行属性有效性验证（调用[[\yii\base\Model::validate()|validate()]]方法）。
+     *                             默认为`true`。如果属性有效性验证失败，则活动记录不会保存到数据库中，此方法也将返回`false`。
+     *   $attribute      | array | 需要保存的属性。默认为`null`，意味着从数据库中读取的所有属性都将保存。 
+     * 结果：
+     *   int|bool 受影响的行数，验证失败、更新进程异常停止或者其他异常导致的更新失败，会返回`false`。
+     *            需要注意的是，在记录更新操作执行成功的情况下，受影响的行数是有可能为0的。
+     *            即无法以结果为0来判断更新操作执行失败。
      */
     public function update($runValidation = true, $attributeNames = null);
 
@@ -465,12 +553,23 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      *
      * @return int|bool the number of rows deleted, or `false` if the deletion is unsuccessful for some reason.
      * Note that it is possible that the number of rows deleted is 0, even though the deletion execution is successful.
+     *
+     * 从数据库中删除当前的活动记录数据。
+     *
+     * 结果：
+     *   int|bool 删除的行条数，当由于异常导致删除不成功时，会返回`false`。
+     *            需要注意的是，在记录删除操作执行成功的情况下，受影响的行数是有可能为0的。
+     *            即无法以结果为0来判断删除操作执行失败。
      */
     public function delete();
 
     /**
      * Returns a value indicating whether the current record is new (not saved in the database).
      * @return bool whether the record is new and should be inserted when calling [[save()]].
+     *
+     * 返回一个值，表示当前活动记录是否是全新的数据，即在数据库中没有记录的数据。
+     * 结果：
+     *   bool | 活动记录是否是全新的数据，在调用[[save()]]方法时，全新则插入，旧数据则更新。
      */
     public function getIsNewRecord();
 
@@ -479,6 +578,13 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * Two [[getIsNewRecord()|new]] records are considered to be not equal.
      * @param static $record record to compare to
      * @return bool whether the two active records refer to the same row in the same database table.
+     * 
+     * 给定的活动记录，是否与当前的活动记录相同。
+     * 两个[[getIsNewRecord()|new]]记录，并不对等。
+     * 参数：
+     *   $record | static | 需要被比较的活动记录
+     * 结果：
+     *   bool | 两个活动记录是否引用的同一个数据表中的同一行数据。
      */
     public function equals($record);
 
@@ -490,6 +596,16 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param string $name the relation name, e.g. `orders` for a relation defined via `getOrders()` method (case-sensitive).
      * @param bool $throwException whether to throw exception if the relation does not exist.
      * @return ActiveQueryInterface the relational query object
+     *
+     * 返回指定名称的关联对象。
+     * 一个关联对象通过在ActiveRecord类中的getter方法来定义，此方法将会返回一个实现[[ActiveQueryInterface]]接口协议的对象（通常会返回一个关联的
+     * [[ActiveQuery]]对象）。
+     * 此关联对象可以在ActiveRecord类中声明，也可以在其行为中声明。
+     * 参数：
+     *   $name           | string | 关联名称，例如关联对象`orders`通过`getOrders()`方法来定义（大小写敏感）。
+     *   $throwException | bool   | 如果此关联对象不存在，是否报错。
+     * 结果：
+     *   ActiveQueryInterface实例 | 关联查询对象
      */
     public function getRelation($name, $throwException = true);
 
@@ -499,6 +615,13 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param string $name the relation name, e.g. `orders` for a relation defined via `getOrders()` method (case-sensitive).
      * @param ActiveRecordInterface|array|null $records the related records to be populated into the relation.
      * @since 2.0.8
+     *
+     * 填充指定的关系相关的记录。
+     * 需要注意的是此方法并不会检查指定的关联关系是否存在。
+     * 参数：
+     *   $name    | string                           | 关联名称，例如关联对象`orders`通过`getOrders()`方法来定义（大小写敏感）。
+     *   $records | ActiveRecordInterface|array|null | 填充进关系对象的相关的活动记录。
+     * $since 2.0.8
      */
     public function populateRelation($name, $records);
 
@@ -519,6 +642,19 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param array $extraColumns additional column values to be saved into the junction table.
      * This parameter is only meaningful for a relationship involving a junction table
      * (i.e., a relation set with [[ActiveQueryInterface::via()]]).
+     *
+     * 在两个活动记录之间建立关系。
+     * 通过将一个记录中的外键值设置为另一个记录中的相应主键值来建立该关系。
+     * 具有外键的记录将保存到数据库中而不执行验证。
+     *
+     * 如果关系涉及联结表，则会在联结表中插入一个新行，其中包含两个记录中的主键值。
+     * 此方法要求主键值不是“null”。
+     * 
+     * 参数：
+     *   $name         | string | 关联名称，例如关联对象`orders`通过`getOrders()`方法来定义（大小写敏感）。
+     *   $model        | static | 将与当前活动记录关联的活动记录对象。
+     *   $extraColumns | array  | 保存到中间表中的额外列值。这个参数只有在两个预关联对象存在中间表的情况下有意义
+     *                            （即一个关联关系通过[[ActiveQueryInterface::via()]]来设置）。
      */
     public function link($name, $model, $extraColumns = []);
 
@@ -533,12 +669,27 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * @param bool $delete whether to delete the model that contains the foreign key.
      * If false, the model's foreign key will be set `null` and saved.
      * If true, the model containing the foreign key will be deleted.
+     * 
+     * 销毁两个活动记录之间的关系。
+     * 如果参数`$delete`为`true`，则在关联关系中，拥有外键的一个活动记录将被删除。
+     * 否则，外键将会被设置为`null`且活动记录将会在不执行验证的情况下保存。
+     * 
+     * 参数：
+     *   $name   | string | 关联名称，例如关联对象`orders`通过`getOrders()`方法来定义（大小写敏感）。
+     *   $model  | static | 将与当前活动记录接触关联的活动记录对象。
+     *   $delete | bool   | 是否删除包含外键的模型。
+     *                      false: 模型的外键将会被设置为`null`并保存。
+     *                      true:  包含外键的模型将会被删除。
      */
     public function unlink($name, $model, $delete = false);
 
     /**
      * Returns the connection used by this AR class.
      * @return mixed the database connection used by this AR class.
+     *
+     * 返回此AR类的数据库连接。
+     * 结果：
+     *   无确定类型 | 此AR类使用的数据库连接。
      */
     public static function getDb();
 }
