@@ -333,19 +333,19 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * See the following code for usage examples:
      *
      * ```php
-     * // 查找一个主键值是10的客户
+     * // 查找一个主键值是10的客户信息。
      * $customer = Customer::findOne(10);
      *
      * // 以上代码等价于：
      * $customer = Customer::find()->where(['id' => 10])->one();
      *
-     * // 查找一个主键值是10,11或12的客户
+     * // 查找一个主键值是10,11或12的客户信息。
      * $customers = Customer::findOne([10, 11, 12]);
      *
      * // 以上代码等价于：
      * $customers = Customer::find()->where(['id' => [10, 11, 12]])->one();
      *
-     * // 查找`age`为30，`status`为1的第一个客户
+     * // 查找`age`为30，`status`为1的第一个客户信息。
      * $customer = Customer::findOne(['age' => 30, 'status' => 1]);
      *
      * // 以上代码等价于：
@@ -369,7 +369,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * ```
      *
      * 参数：
-     *   $condition | mixed | 主键值或者一组特定的列属性
+     *   $condition | mixed | 主键值或者一组特定的列属性。
      * 结果：
      *   static | 匹配的ActiveRecord对象，无匹配则结果返回`null`。
      */
@@ -439,6 +439,62 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      *
      * @param mixed $condition primary key value or a set of column values
      * @return array an array of ActiveRecord instance, or an empty array if nothing matches.
+     *
+     * 通过主键值或者一组列值来查询，返回一个活动记录实例数组。
+     * 此方法允许以下参数类型：
+     *  - 标量（integer或string)：通过单一主键值来查询并返回符合条件的活动记录数组，未找到则返回空数组。
+     *  - 非关联数组：通过复合主键的值数组来查询并返回复合条件的一组活动记录，未找到则返回空数组。
+     *    需要注意的是，如果参数为空，则会返回一个空的结果，因为参数为空会被当成搜索主键为空的数据，而非`WHERE`条件为空的情况。
+     *  - 键值对关联数组：通过一组属性值查询，返回匹配所有值的单一活动记录，未找到则返回空数组。特别注意的是`['id' => 1, 2]` 被视为一个非关联数组。
+     *    列名仅限于当前活动记录对应的数据表的所有列名，以及一些过滤词，如`and`，`or`等。  
+     * 
+     * 此方法会自动调用`all()`方法，返回一个[[ActiveRecordInterface|ActiveRecord]]实例数组。
+     * 
+     * 
+     * > 注意：因为此方法只是一个速记的方法，太过于复杂的筛选条件并不适合作为此方法的参数。
+     * > 如果你需要指定更复杂的筛选条件，使用[[find()]]并搭配[[ActiveQuery::where()|where()]]来代替。
+     *
+     * 使用方法参照以下实例代码：
+     *
+     * ```php
+     * // 查找所有主键值为10的客户信息。
+     * $customers = Customer::findAll(10);
+     *
+     * // 以上代码等价于：
+     * $customers = Customer::find()->where(['id' => 10])->all();
+     *
+     * // 查找所有主键值是10,11或12的客户信息。
+     * $customers = Customer::findAll([10, 11, 12]);
+     *
+     * // 以上代码等价于：
+     * $customers = Customer::find()->where(['id' => [10, 11, 12]])->all();
+     *
+     * // 查找`age`为30，`status`为1的所有客户信息。
+     * $customers = Customer::findAll(['age' => 30, 'status' => 1]);
+     *
+     * // 以上代码等价于：
+     * $customers = Customer::find()->where(['age' => 30, 'status' => 1])->all();
+     * ```
+     *
+     * 如果需要将用户输入传递给此方法，请确保输入值是标量，或输入量是数组的情况下，确保无法从外部更改数组结构：
+     *
+     * ```php
+     * // yii\web\Controller类确保$id是标量
+     * public function actionView($id)
+     * {
+     *     $model = Post::findOne($id);
+     *     // ...
+     * } 
+     * // 通过一个标量或数组明确指定要搜索的列，将始终会查找到单个记录
+     * $model = Post::findOne(['id' => Yii::$app->request->get('id')]);
+     *
+     * // 千万不要使用下面的代码！数组可以注入条件来过滤通过任意列的值！即会被SQL注入攻击！
+     * $model = Post::findOne(Yii::$app->request->get('id'));
+     * 
+     * 参数：
+     *   $condition | mixed | 主键值或者一组特定的列属性。
+     * 结果：
+     *   array | 匹配的ActiveRecord对象数组，无匹配则结果返回空数组。
      */
     public static function findAll($condition);
 
