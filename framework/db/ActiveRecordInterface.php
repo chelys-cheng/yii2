@@ -513,7 +513,7 @@ interface ActiveRecordInterface extends StaticInstanceInterface
      * Please refer to [[QueryInterface::where()]] on how to specify this parameter.
      * An empty condition will match all records.
      * @return int the number of rows updated
-     
+     *
      * 使用提供的数据来更新特定的活动记录。
      *
      * 例如，将`status`为2的所有顾客的`status`修改为1：
